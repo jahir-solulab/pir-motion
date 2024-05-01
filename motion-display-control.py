@@ -7,6 +7,14 @@ from gpiozero import MotionSensor
 from signal import pause
 import paho.mqtt.client as mqtt
 
+mqtt_topic=MQTT_TOPIC
+
+
+# MQTT configurations
+MQTT_BROKER = "18.222.69.128"
+MQTT_PORT = 1883
+MQTT_TOPIC = "motion_detection"
+
 class Display:
     @staticmethod
     def isTurnedOn():
@@ -73,9 +81,5 @@ class Motion:
         
         self.resetTimer()
 
-# MQTT configurations
-MQTT_BROKER = "18.222.69.128"
-MQTT_PORT = 1883
-MQTT_TOPIC = "motion_detection"
 
 motion = Motion(gpio_pin=4, display_delay=60, verbose=False, mqtt_broker=MQTT_BROKER, mqtt_port=MQTT_PORT, mqtt_topic=MQTT_TOPIC)
