@@ -5,7 +5,7 @@ from threading import Timer
 from subprocess import getoutput, run, DEVNULL
 from gpiozero import MotionSensor
 from signal import pause
-
+import paho.mqtt.client as mqtt
 
 class Display:
     @staticmethod
@@ -25,11 +25,10 @@ class Display:
         logging.debug("[Display]: Turning OFF the display..")
         run(['vcgencmd', 'display_power', '0'], stdout=DEVNULL)
 
-
 class Motion:
     timer = None
 
-    def __init__(self, gpio_pin, display_delay, verbose):
+    def __init__(self, gpio_pin, display_delay, verbose, mqtt_broker, mqtt_port, mqtt_topic):
         if verbose == True:
             logging.basicConfig(level=logging.DEBUG)
         else:
@@ -45,6 +44,11 @@ class Motion:
         self.pir = MotionSensor(gpio_pin)
         self.pir.when_motion = self.onMotion
         self.resetTimer()
+        
+        # Initialize MQTT client
+        self.mqtt_client = mqtt.Client()
+        self.mqtt_client.connect(mqtt_broker, mqtt_port, 60)
+        
         pause()
 
     def resetTimer(self):
@@ -64,8 +68,15 @@ class Motion:
         if Display.isTurnedOn() == False:
             logging.debug("[Motion]: Display is off, turning it on!")
             Display.turnOn()
-
+            
+        # Publish motion detection status to MQTT broker
+        self.mqtt_client.publish(mqtt_topic, "Motion Detected")
+        
         self.resetTimer()
 
+# MQTT configurations
+MQTT_BROKER = "18.222.69.128"
+MQTT_PORT = 1883
+MQTT_TOPIC = "motion_detection"
 
-motion = Motion(gpio_pin=4, display_delay=60, verbose=False)
+motion = Motion(gpio_pin=4, display_delay=60, verbose=False, mqtt_broker=MQTT_BROKER, mqtt_port=MQTT_PORT, mqtt_topic=MQTT_TOPIC)
