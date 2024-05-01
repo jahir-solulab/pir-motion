@@ -5,7 +5,7 @@ from threading import Timer
 from subprocess import check_output, call
 from gpiozero import MotionSensor
 from signal import pause
-import mosquitto
+import paho.mqtt.client as mqtt
 
 class Display:
     @staticmethod
@@ -45,7 +45,7 @@ class Motion:
         self.resetTimer()
         
         # Initialize MQTT client
-        self.mqtt_client = mosquitto.Mosquitto()
+        self.mqtt_client = mqtt.Client()
         self.mqtt_client.connect(mqtt_broker, mqtt_port, 60)
         
         pause()
