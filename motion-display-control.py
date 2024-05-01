@@ -1,29 +1,29 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import logging
 from threading import Timer
-from subprocess import getoutput, run, DEVNULL
+from subprocess import check_output, call
 from gpiozero import MotionSensor
 from signal import pause
-import paho.mqtt.client as mqtt
+import mosquitto
 
 class Display:
     @staticmethod
     def isTurnedOn():
-        status = getoutput("vcgencmd display_power")
+        status = check_output(["vcgencmd", "display_power"])
         isTurnedOn = status == "display_power=1"
-        logging.debug(f"[Display]: Is turned on: {isTurnedOn}")
+        logging.debug("[Display]: Is turned on: %s" % isTurnedOn)
         return isTurnedOn
 
     @staticmethod
     def turnOn():
         logging.debug("[Display]: Turning ON the display..")
-        run(['vcgencmd', 'display_power', '1'], stdout=DEVNULL)
+        call(['vcgencmd', 'display_power', '1'])
 
     @staticmethod
     def turnOff():
         logging.debug("[Display]: Turning OFF the display..")
-        run(['vcgencmd', 'display_power', '0'], stdout=DEVNULL)
+        call(['vcgencmd', 'display_power', '0'])
 
 class Motion:
     timer = None
@@ -34,8 +34,7 @@ class Motion:
         else:
             logging.basicConfig(level=logging.INFO)
 
-        logging.info(
-            f"[Motion]: Initializing - GPIO_PIN: {gpio_pin}, DISPLAY_DELAY: {display_delay}, VERBOSE: {verbose}")
+        logging.info("[Motion]: Initializing - GPIO_PIN: %s, DISPLAY_DELAY: %s, VERBOSE: %s" % (gpio_pin, display_delay, verbose))
 
         if verbose == True:
             logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +45,7 @@ class Motion:
         self.resetTimer()
         
         # Initialize MQTT client
-        self.mqtt_client = mqtt.Client()
+        self.mqtt_client = mosquitto.Mosquitto()
         self.mqtt_client.connect(mqtt_broker, mqtt_port, 60)
         
         pause()
@@ -58,7 +57,7 @@ class Motion:
             logging.debug("[Motion]: Old timer found! Destroying it!")
             self.timer.cancel()
 
-        logging.debug(f"[Motion]: Setting timer for {self.display_delay}")
+        logging.debug("[Motion]: Setting timer for %s" % self.display_delay)
         self.timer = Timer(self.display_delay, Display.turnOff)
         self.timer.start()
 
